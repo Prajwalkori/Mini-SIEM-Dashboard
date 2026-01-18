@@ -1,0 +1,77 @@
+<dashboard version="1.1" theme="dark">
+  <label>Mini SIEM Dashboard – Security Event Monitoring</label>
+  <description>
+    Unified visibility into security event volume, failed SSH activity, and top source IPs using syslog and Apache logs.
+  </description>
+
+  <!-- PANEL 1 : TOTAL SECURITY EVENTS -->
+  <row>
+    <panel>
+      <title>Total Security Events (All Time)</title>
+      <single>
+        <search>
+          <query>
+            index=main (sourcetype=syslog OR sourcetype=apache_error)
+            | stats count
+          </query>
+          <earliest>0</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="useColors">true</option>
+        <option name="numberPrecision">0</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- PANEL 2 + 3 -->
+  <row>
+
+    <!-- FAILED SSH SOURCE IPs -->
+    <panel>
+      <title>Top Source IPs – Failed SSH Logins</title>
+      <chart>
+        <search>
+          <query>
+            index=main sourcetype=syslog "Failed password"
+            | rex field=_raw "(?&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+)"
+            | stats count as "Failed Attempts" by src_ip
+            | sort -"Failed Attempts"
+            | head 7
+          </query>
+          <earliest>0</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.axisTitleX.text">Failed SSH Attempts</option>
+        <option name="charting.axisTitleY.text">Source IP</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.seriesColors">["#DC2626"]</option>
+      </chart>
+    </panel>
+
+    <!-- OVERALL EVENT SOURCE IPs -->
+    <panel>
+      <title>Top Source IPs – All Security Events</title>
+      <chart>
+        <search>
+          <query>
+            index=main (sourcetype=syslog OR sourcetype=apache_error)
+            | rex field=_raw "(?&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+)"
+            | stats count as "Event Count" by src_ip
+            | sort -"Event Count"
+            | head 7
+          </query>
+          <earliest>0</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.axisTitleX.text">Event Count</option>
+        <option name="charting.axisTitleY.text">Source IP</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.seriesColors">["#2563EB"]</option>
+      </chart>
+    </panel>
+
+  </row>
+</dashboard>
